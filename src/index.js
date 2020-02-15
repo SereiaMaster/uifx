@@ -44,6 +44,7 @@ export default class UIfx {
     const volume = validateVolume(config && config.volume);
     const throttleMs = validateThrottleMs(config && config.throttleMs);
     const playbackRate = validatePlaybackRate(config && config.playbackRate);
+    const loop = config.loop || false;
     const appendAudioElement = file => {
       // hack to force browser
       // to preload audio file
@@ -79,6 +80,8 @@ export default class UIfx {
     this.play = throttleMs > 0 ? throttle(this.play, throttleMs) : this.play;
     this.setVolume = this.setVolume;
     this.setPlaybackRate = this.setPlaybackRate;
+    this.setLoop = this.setLoop;
+    this.loop = loop;
     this.validateVolume = validateVolume;
     this.validatePlaybackRate = validatePlaybackRate;
   }
@@ -93,6 +96,7 @@ export default class UIfx {
     
       audioElement.volume = volume >= 0 && volume <= 1 ? volume : this.volume;
       audioElement.playbackRate = this.playbackRate;
+      audioElement.loop = this.loop;
     
       const audioElementPromised = audioElement.play();
       
@@ -117,6 +121,11 @@ export default class UIfx {
   setPlaybackRate = rate => {
     this.validatePlaybackRate(rate);
     this.playbackRate = rate;
+    return this;
+  };
+
+  setLoop = active => {
+    this.loop = active;
     return this;
   };
 }

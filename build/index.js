@@ -55,6 +55,7 @@ var UIfx = function UIfx(file, config) {
   var volume = validateVolume(config && config.volume);
   var throttleMs = validateThrottleMs(config && config.throttleMs);
   var playbackRate = validatePlaybackRate(config && config.playbackRate);
+  var loop = config.loop || false;
   var appendAudioElement = function appendAudioElement(file) {
     // hack to force browser
     // to preload audio file
@@ -90,6 +91,8 @@ var UIfx = function UIfx(file, config) {
   this.play = throttleMs > 0 ? throttle(this.play, throttleMs) : this.play;
   this.setVolume = this.setVolume;
   this.setPlaybackRate = this.setPlaybackRate;
+  this.setLoop = this.setLoop;
+  this.loop = loop;
   this.validateVolume = validateVolume;
   this.validatePlaybackRate = validatePlaybackRate;
 };
@@ -107,6 +110,7 @@ var _initialiseProps = function _initialiseProps() {
 
       audioElement.volume = volume >= 0 && volume <= 1 ? volume : _this.volume;
       audioElement.playbackRate = _this.playbackRate;
+      audioElement.loop = _this.loop;
 
       var audioElementPromised = audioElement.play();
 
@@ -129,6 +133,11 @@ var _initialiseProps = function _initialiseProps() {
   this.setPlaybackRate = function (rate) {
     _this.validatePlaybackRate(rate);
     _this.playbackRate = rate;
+    return _this;
+  };
+
+  this.setLoop = function (active) {
+    _this.loop = active;
     return _this;
   };
 };

@@ -4,6 +4,7 @@ declare module 'uifx' {
     volume?: number;
     throttleMs?: number;
     playbackRate?: number;
+    loop?: boolean;
   };
 
   export default class UIFx {
@@ -13,5 +14,6 @@ declare module 'uifx' {
     play: (volume?: number) => UIFx;
     setVolume: (volume: number) => UIFx;
     setPlaybackRate: (rate: number) => UIFx;
+    setLoop: (active: boolean) => UIFx;
   }
 }
