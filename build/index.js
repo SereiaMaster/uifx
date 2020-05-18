@@ -1,10 +1,14 @@
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+  value: true,
 });
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
 var UIfx = function UIfx(file, config) {
   _classCallCheck(this, UIfx);
@@ -28,6 +32,14 @@ var UIfx = function UIfx(file, config) {
       throw Error('Requires valid URI path for "file"');
     } else return file;
   };
+  var validatePlaybackRate = function validatePlaybackRate(rate) {
+    var message = '"PlaybackRate" must be a number greater than 0.25';
+
+    if (rate && typeof rate !== "number") throw Error(message);
+    if (rate < 0.25) throw Error(message);
+
+    return rate ? rate : 1.0;
+  };
   var validateVolume = function validateVolume(volume) {
     var message = '"Volume" must be an number between 0.0 and 1.0';
 
@@ -46,6 +58,8 @@ var UIfx = function UIfx(file, config) {
   };
   var volume = validateVolume(config && config.volume);
   var throttleMs = validateThrottleMs(config && config.throttleMs);
+  var playbackRate = validatePlaybackRate(config && config.playbackRate);
+  var loop = config.loop || false;
   var appendAudioElement = function appendAudioElement(file) {
     // hack to force browser
     // to preload audio file
@@ -63,7 +77,7 @@ var UIfx = function UIfx(file, config) {
       }
       return Math.abs(hash);
     };
-    var id = namespace + '-' + hash(file);
+    var id = namespace + "-" + hash(file);
     var audioElement = document.createElement("audio");
 
     audioElement.id = id;
@@ -76,42 +90,84 @@ var UIfx = function UIfx(file, config) {
 
   this.file = appendAudioElement(validateURI(file));
   this.volume = volume;
+  this.playbackRate = playbackRate;
   this.throttleMs = throttleMs;
   this.play = throttleMs > 0 ? throttle(this.play, throttleMs) : this.play;
+  this.pause = this.pause;
   this.setVolume = this.setVolume;
+  this.setPlaybackRate = this.setPlaybackRate;
+  this.setLoop = this.setLoop;
+  this.loop = loop;
   this.validateVolume = validateVolume;
+  this.validatePlaybackRate = validatePlaybackRate;
 };
 
 var _initialiseProps = function _initialiseProps() {
   var _this = this;
 
   this.play = function (volume) {
-
     _this.validateVolume(volume);
 
-    var audioElement = new Audio(_this.file);
-    audioElement.load();
-    audioElement.addEventListener("loadeddata", function () {
+    if (_this.audioPlaying) {
+      var audioElementPromised = _this.audioPlaying.play();
 
-      audioElement.volume = volume >= 0 && volume <= 1 ? volume : _this.volume;
+      audioElementPromised
+        .then(function () {
+          // autoplay started, everyting is ok
+        })
+        .catch(function (error) {
+          console.log(
+            'UIfx says: "had a problem playing file: ' + _this.file + '"'
+          );
+        });
+    } else {
+      var audioElement = new Audio(_this.file);
 
-      var audioElementPromised = audioElement.play();
+      audioElement.load();
+      audioElement.addEventListener("loadeddata", function () {
+        audioElement.volume =
+          volume >= 0 && volume <= 1 ? volume : _this.volume;
+        audioElement.playbackRate = _this.playbackRate;
+        audioElement.loop = _this.loop;
 
-      audioElementPromised.then(function () {
-        // autoplay started, everyting is ok
-      }).catch(function (error) {
-        console.log('UIfx says: "had a problem playing file: ' + _this.file + '"');
+        _this.audioPlaying = audioElement;
+        var audioElementPromised = audioElement.play();
+
+        audioElementPromised
+          .then(function () {
+            // autoplay started, everyting is ok
+          })
+          .catch(function (error) {
+            console.log(
+              'UIfx says: "had a problem playing file: ' + _this.file + '"'
+            );
+          });
       });
-    });
+    }
+
+    return _this;
+  };
+
+  this.pause = function () {
+    _this.audioPlaying.pause();
 
     return _this;
   };
 
   this.setVolume = function (volume) {
     _this.validateVolume(volume);
-
     _this.volume = volume;
+    return _this;
+  };
 
+  this.setPlaybackRate = function (rate) {
+    _this.validatePlaybackRate(rate);
+    _this.playbackRate = rate;
+    return _this;
+  };
+
+  this.setLoop = function (active) {
+    _this.loop = active;
     return _this;
   };
 };
