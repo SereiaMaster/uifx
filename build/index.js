@@ -149,7 +149,9 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.pause = function () {
-    _this.audioPlaying.pause();
+    if (_this.audioPlaying) {
+      _this.audioPlaying.pause();
+    }
 
     return _this;
   };
